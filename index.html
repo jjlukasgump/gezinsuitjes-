@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f2a1e" />
+  <title>GezinsUitjes</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --g50: #f0f7f3; --g100: #d8ede1; --g200: #b3dbc5; --g300: #82c2a3;
+      --g400: #4fa47e; --g500: #2d8660; --g600: #1f6b4c; --g700: #1a543c;
+      --g800: #163f2e; --g900: #0f2a1e; --g950: #091a12;
+    }
+    html, body { background: var(--g950); color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+    #app { max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 72px; }
+
+    /* Nav */
+    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: var(--g900); border-top: 1px solid var(--g800); display: flex; justify-content: space-around; padding: 8px 0 20px; z-index: 100; }
+    .nav-btn { background: none; border: none; color: var(--g600); display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 12px; border-radius: 12px; transition: color .15s; }
+    .nav-btn.active { color: #fff; }
+    .nav-btn span:first-child { font-size: 22px; }
+
+    /* Page header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; padding: 52px 16px 16px; }
+    .page-header h1 { font-size: 26px; font-weight: 700; }
+    .back-header { display: flex; align-items: center; gap: 10px; padding: 52px 16px 16px; }
+    .back-btn { background: none; border: none; color: var(--g400); font-size: 28px; cursor: pointer; line-height: 1; }
+
+    /* Cards & inputs */
+    .card { background: var(--g900); border: 1px solid var(--g800); border-radius: 16px; padding: 16px; }
+    .input { background: var(--g800); border: 1px solid var(--g700); color: #fff; border-radius: 12px; padding: 12px 16px; width: 100%; font-size: 15px; outline: none; transition: border-color .15s; }
+    .input:focus { border-color: var(--g400); }
+    .input::placeholder { color: var(--g600); }
+    select.input option { background: var(--g800); }
+    .btn-primary { background: var(--g500); color: #fff; border: none; border-radius: 12px; padding: 13px 20px; font-size: 15px; font-weight: 600; width: 100%; cursor: pointer; transition: background .15s; }
+    .btn-primary:hover { background: var(--g400); }
+    .btn-primary:disabled { opacity: .4; cursor: default; }
+    .btn-ghost { background: none; border: none; color: var(--g400); font-size: 14px; cursor: pointer; padding: 8px 16px; border-radius: 12px; transition: color .15s; }
+    .btn-ghost:hover { color: #fff; }
+    .btn-icon { width: 36px; height: 36px; background: var(--g700); border: none; color: #fff; border-radius: 50%; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+    .btn-icon:hover { background: var(--g600); }
+
+    /* Layout helpers */
+    .px { padding: 0 16px; }
+    .col { display: flex; flex-direction: column; gap: 10px; }
+    .row { display: flex; gap: 8px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .empty { text-align: center; padding: 48px 0; color: var(--g600); }
+    .empty .icon { font-size: 40px; margin-bottom: 8px; }
+
+    /* Section label */
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--g600); padding: 0 16px; margin-bottom: 6px; margin-top: 8px; }
+
+    /* Item row */
+    .item-row { display: flex; align-items: center; gap: 12px; background: var(--g900); border: 1px solid var(--g800); border-radius: 14px; padding: 12px 14px; cursor: pointer; transition: border-color .15s; }
+    .item-row:hover { border-color: var(--g600); }
+    .item-check { font-size: 22px; flex-shrink: 0; }
+    .item-body { flex: 1; min-width: 0; }
+    .item-title { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-title.done { text-decoration: line-through; color: var(--g600); }
+    .item-note { font-size: 12px; color: var(--g500); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Trip row */
+    .trip-row { display: flex; align-items: center; justify-content: space-between; background: var(--g900); border: 1px solid var(--g800); border-radius: 16px; padding: 14px 16px; cursor: pointer; transition: border-color .15s; }
+    .trip-row:hover { border-color: var(--g600); }
+    .trip-name { font-size: 16px; font-weight: 600; }
+    .trip-sub { font-size: 13px; color: var(--g500); margin-top: 3px; }
+    .chevron { color: var(--g700); font-size: 22px; }
+
+    /* Onboarding */
+    .onboarding { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; gap: 32px; }
+    .onboarding-logo { text-align: center; }
+    .onboarding-logo .icon { font-size: 64px; }
+    .onboarding-logo h1 { font-size: 32px; font-weight: 700; margin-top: 12px; }
+    .onboarding-logo p { color: var(--g500); margin-top: 6px; }
+    .onboarding-form { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 12px; }
+
+    /* Badge */
+    .badge { background: var(--g700); color: var(--g300); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+
+    /* Settings row */
+    .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+    .settings-label { color: var(--g500); font-size: 14px; }
+    .settings-value { color: #fff; font-size: 14px; }
+    .mono { font-family: monospace; background: var(--g800); padding: 2px 8px; border-radius: 6px; letter-spacing: .1em; }
+
+    /* Hidden */
+    .hidden { display: none !important; }
+    .page { display: none; flex-direction: column; }
+    .page.active { display: flex; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ONBOARDING -->
+  <div id="screen-onboarding" class="onboarding">
+    <div class="onboarding-logo">
+      <div class="icon">🧳</div>
+      <h1>GezinsUitjes</h1>
+      <p>Nooit meer iets vergeten</p>
+    </div>
+    <div id="ob-choice" class="onboarding-form">
+      <button class="btn-primary" onclick="obShow('create')">Nieuw gezin aanmaken</button>
+      <button class="btn-ghost" onclick="obShow('join')">Bestaand gezin joinen</button>
+    </div>
+    <div id="ob-create" class="onboarding-form hidden">
+      <input class="input" id="ob-member" placeholder="Jouw naam (bijv. Papa)" />
+      <input class="input" id="ob-family" placeholder="Gezinsnaam (optioneel)" />
+      <button class="btn-primary" onclick="createFamily()">Aanmaken</button>
+      <button class="btn-ghost" onclick="obShow('choice')">Terug</button>
+    </div>
+    <div id="ob-join" class="onboarding-form hidden">
+      <input class="input" id="ob-join-name" placeholder="Jouw naam" />
+      <input class="input" id="ob-join-code" placeholder="Gezinscode (6 tekens)" maxlength="6" oninput="this.value=this.value.toUpperCase()" />
+      <p style="color:var(--g600);font-size:13px;text-align:center">Join-functie volgt na Supabase koppeling</p>
+      <button class="btn-ghost" onclick="obShow('choice')">Terug</button>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="screen-app" class="hidden" style="display:none;flex-direction:column;flex:1">
+
+    <!-- TRIPS PAGE -->
+    <div id="page-trips" class="page active">
+      <div class="page-header">
+        <h1>Uitjes</h1>
+        <button class="btn-icon" onclick="toggleAddTrip()">+</button>
+      </div>
+      <div class="px col" id="add-trip-form" style="display:none;margin-bottom:10px">
+        <div class="card col">
+          <input class="input" id="trip-name" placeholder="Naam van het uitje" />
+          <div class="grid2" id="trip-types"></div>
+          <div class="row">
+            <button class="btn-primary" onclick="saveTrip()">Opslaan</button>
+            <button class="btn-ghost" onclick="toggleAddTrip()">Annuleer</button>
+          </div>
+        </div>
+      </div>
+      <div class="px col" id="trips-list"></div>
+    </div>
+
+    <!-- TRIP DETAIL PAGE -->
+    <div id="page-trip-detail" class="page">
+      <div class="back-header">
+        <button class="back-btn" onclick="showPage('trips')">‹</button>
+        <h1 id="detail-title" style="font-size:22px;font-weight:700;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></h1>
+        <button class="btn-icon" onclick="toggleAddItem()">+</button>
+      </div>
+      <div class="px col" id="add-item-form" style="display:none;margin-bottom:10px">
+        <div class="card col">
+          <input class="input" id="item-title" placeholder="Item naam (bijv. Zonnebrand)" />
+          <input class="input" id="item-note" placeholder="Notitie (optioneel)" />
+          <select class="input" id="item-cat"></select>
+          <div class="row">
+            <button class="btn-primary" onclick="saveItem()">Toevoegen</button>
+            <button class="btn-ghost" onclick="toggleAddItem()">Annuleer</button>
+          </div>
+        </div>
+      </div>
+      <div id="trip-detail-sections"></div>
+    </div>
+
+    <!-- IDEAS PAGE -->
+    <div id="page-ideas" class="page">
+      <div class="page-header">
+        <h1>Ideeën</h1>
+        <button class="btn-icon" onclick="toggleAddIdea()">+</button>
+      </div>
+      <div class="px col" id="add-idea-form" style="display:none;margin-bottom:10px">
+        <div class="card col">
+          <input class="input" id="idea-title" placeholder="Titel (bijv. Efteling)" />
+          <input class="input" id="idea-url" placeholder="Link (optioneel)" />
+          <input class="input" id="idea-note" placeholder="Notitie (optioneel)" />
+          <div class="row">
+            <button class="btn-primary" onclick="saveIdea()">Opslaan</button>
+            <button class="btn-ghost" onclick="toggleAddIdea()">Annuleer</button>
+          </div>
+        </div>
+      </div>
+      <div class="px col" id="ideas-list"></div>
+    </div>
+
+    <!-- KITS PAGE -->
+    <div id="page-kits" class="page">
+      <div class="page-header"><h1>Kits</h1></div>
+      <div class="px">
+        <div class="card empty">
+          <div class="icon">📦</div>
+          <p>Kits komen in de volgende versie.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div id="page-settings" class="page">
+      <div class="page-header"><h1>Instellingen</h1></div>
+      <div class="px col">
+        <div class="card col" id="settings-family"></div>
+        <button class="btn-ghost" style="color:#f87171;margin-top:8px" onclick="resetApp()">Gezin verlaten (reset app)</button>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" id="nav-trips" onclick="showPage('trips')"><span>🚗</span><span>Uitjes</span></button>
+      <button class="nav-btn" id="nav-ideas" onclick="showPage('ideas')"><span>💡</span><span>Ideeën</span></button>
+      <button class="nav-btn" id="nav-kits" onclick="showPage('kits')"><span>📦</span><span>Kits</span></button>
+      <button class="nav-btn" id="nav-settings" onclick="showPage('settings')"><span>⚙️</span><span>Instellingen</span></button>
+    </nav>
+  </div>
+
+</div>
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const DB = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+}
+
+function getAll(store)       { return DB.get('gu_' + store) || [] }
+function saveAll(store, arr) { DB.set('gu_' + store, arr) }
+function uid()               { return crypto.randomUUID() }
+function now()               { return new Date().toISOString() }
+function deviceId() {
+  let id = localStorage.getItem('gu_device_id')
+  if (!id) { id = uid(); localStorage.setItem('gu_device_id', id) }
+  return id
+}
+function familyId() { return localStorage.getItem('gu_family_id') }
+function setFamilyId(id) { localStorage.setItem('gu_family_id', id) }
+
+function record(data) {
+  const t = now()
+  return { id: uid(), family_id: familyId(), created_at: t, updated_at: t,
+           deleted_at: null, updated_by_device_id: deviceId(), version: 1, ...data }
+}
+
+// ============================================================
+// ONBOARDING
+// ============================================================
+const DEFAULT_CATS = [
+  { name: 'Medisch',     icon: '🩺', color: '#FF6B6B', essential: true  },
+  { name: 'Documenten',  icon: '📄', color: '#4ECDC4', essential: true  },
+  { name: 'Kleding',     icon: '👕', color: '#45B7D1', essential: false },
+  { name: 'Eten',        icon: '🍎', color: '#96CEB4', essential: false },
+  { name: 'Speelgoed',   icon: '🎮', color: '#FFEAA7', essential: false },
+  { name: 'Elektronica', icon: '🔋', color: '#DDA0DD', essential: false },
+  { name: 'Overig',      icon: '📦', color: '#B0B0B0', essential: false },
+]
+
+function obShow(mode) {
+  ['choice','create','join'].forEach(m =>
+    document.getElementById('ob-' + m).classList.toggle('hidden', m !== mode)
+  )
+}
+
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  return Array.from(crypto.getRandomValues(new Uint8Array(6)))
+    .map(b => chars[b % 32]).join('')
+}
+
+function createFamily() {
+  const memberName = document.getElementById('ob-member').value.trim()
+  if (!memberName) return alert('Vul jouw naam in')
+  const famName = document.getElementById('ob-family').value.trim()
+  const fid = uid()
+  const code = generateCode()
+
+  // Family
+  const families = getAll('families')
+  families.push({ id: fid, family_id: fid, join_code: code,
+    name: famName || null, created_at: now(), updated_at: now(),
+    deleted_at: null, updated_by_device_id: deviceId(), version: 1 })
+  saveAll('families', families)
+  setFamilyId(fid)
+
+  // Member
+  const mid = uid()
+  const members = getAll('members')
+  members.push(record({ id: mid, display_name: memberName, sort_order: 0, is_active: true }))
+  saveAll('members', members)
+
+  // Categories
+  const cats = getAll('categories')
+  DEFAULT_CATS.forEach((c, i) => cats.push(record({
+    name: c.name, icon: c.icon, color_hex: c.color,
+    sort_order: i, is_default_essential: c.essential, is_active: true
+  })))
+  saveAll('categories', cats)
+
+  bootApp()
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+let currentPage = 'trips'
+let currentTripId = null
+let selectedTripType = 'day'
+
+const TRIP_TYPES = [
+  { value: 'day',      label: 'Dagje weg', icon: '☀️' },
+  { value: 'weekend',  label: 'Weekend',   icon: '🌙' },
+  { value: 'vacation', label: 'Vakantie',  icon: '✈️' },
+  { value: 'other',    label: 'Anders',    icon: '📍' },
+]
+
+function bootApp() {
+  document.getElementById('screen-onboarding').style.display = 'none'
+  const app = document.getElementById('screen-app')
+  app.style.display = 'flex'
+  app.classList.remove('hidden')
+  renderTripTypes()
+  showPage('trips')
+}
+
+function init() {
+  if (familyId()) bootApp()
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'))
+  document.getElementById('page-' + page).classList.add('active')
+  const nb = document.getElementById('nav-' + page)
+  if (nb) nb.classList.add('active')
+  currentPage = page
+  if (page === 'trips')    renderTrips()
+  if (page === 'ideas')    renderIdeas()
+  if (page === 'settings') renderSettings()
+}
+
+function openTrip(id) {
+  currentTripId = id
+  const trip = getAll('trips').find(t => t.id === id)
+  document.getElementById('detail-title').textContent = trip?.name || ''
+  document.getElementById('page-trip-detail').classList.add('active')
+  document.querySelectorAll('.page').forEach(p => { if (p.id !== 'page-trip-detail') p.classList.remove('active') })
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'))
+  renderTripDetail()
+}
+
+// ============================================================
+// TRIPS
+// ============================================================
+function renderTripTypes() {
+  const el = document.getElementById('trip-types')
+  el.innerHTML = TRIP_TYPES.map(t => `
+    <button onclick="selectTripType('${t.value}')" id="tt-${t.value}"
+      style="padding:10px;border-radius:12px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;
+             background:${selectedTripType===t.value?'var(--g500)':'var(--g800)'};
+             color:${selectedTripType===t.value?'#fff':'var(--g400)'}">
+      ${t.icon} ${t.label}
+    </button>`).join('')
+}
+
+function selectTripType(val) {
+  selectedTripType = val
+  renderTripTypes()
+}
+
+function toggleAddTrip() {
+  const f = document.getElementById('add-trip-form')
+  f.style.display = f.style.display === 'none' ? 'block' : 'none'
+  if (f.style.display === 'block') document.getElementById('trip-name').focus()
+}
+
+function saveTrip() {
+  const name = document.getElementById('trip-name').value.trim()
+  if (!name) return
+  const trips = getAll('trips')
+  trips.push(record({ name, trip_type: selectedTripType, status: 'active',
+    start_date: null, end_date: null, notes: null }))
+  saveAll('trips', trips)
+  document.getElementById('trip-name').value = ''
+  document.getElementById('add-trip-form').style.display = 'none'
+  renderTrips()
+}
+
+function renderTrips() {
+  const trips = getAll('trips').filter(t => t.family_id === familyId() && !t.deleted_at && t.status === 'active')
+    .sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
+  const el = document.getElementById('trips-list')
+  if (!trips.length) {
+    el.innerHTML = `<div class="card empty"><div class="icon">🚗</div><p>Nog geen uitjes. Tik op + om te beginnen.</p></div>`
+    return
+  }
+  el.innerHTML = trips.map(t => {
+    const type = TRIP_TYPES.find(x => x.value === t.trip_type) || TRIP_TYPES[0]
+    return `<div class="trip-row" onclick="openTrip('${t.id}')">
+      <div>
+        <div class="trip-name">${esc(t.name)}</div>
+        <div class="trip-sub">${type.icon} ${type.label}</div>
+      </div>
+      <span class="chevron">›</span>
+    </div>`
+  }).join('')
+}
+
+// ============================================================
+// TRIP DETAIL
+// ============================================================
+function toggleAddItem() {
+  const f = document.getElementById('add-item-form')
+  f.style.display = f.style.display === 'none' ? 'block' : 'none'
+  if (f.style.display === 'block') {
+    renderCatSelect()
+    document.getElementById('item-title').focus()
+  }
+}
+
+function renderCatSelect() {
+  const cats = getAll('categories').filter(c => c.family_id === familyId() && c.is_active && !c.deleted_at)
+    .sort((a,b) => a.sort_order - b.sort_order)
+  document.getElementById('item-cat').innerHTML =
+    `<option value="">Geen categorie</option>` +
+    cats.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')
+}
+
+function saveItem() {
+  const title = document.getElementById('item-title').value.trim()
+  if (!title) return
+  const note  = document.getElementById('item-note').value.trim()
+  const catId = document.getElementById('item-cat').value
+  const cats  = getAll('categories')
+  const cat   = cats.find(c => c.id === catId)
+  const items = getAll('items')
+  items.push(record({
+    trip_id: currentTripId, title, category_id: catId || null,
+    quantity: null, note: note || null,
+    owner_type: 'unassigned', owner_member_id: null,
+    is_checked: false, checked_at: null, checked_by_member_id: null,
+    is_essential: cat?.is_default_essential ?? false,
+    essential_source: cat ? 'category_default' : 'none'
+  }))
+  saveAll('items', items)
+  document.getElementById('item-title').value = ''
+  document.getElementById('item-note').value = ''
+  document.getElementById('item-cat').value = ''
+  document.getElementById('add-item-form').style.display = 'none'
+  renderTripDetail()
+}
+
+function toggleCheck(id) {
+  const items = getAll('items')
+  const item  = items.find(i => i.id === id)
+  if (!item) return
+  item.is_checked = !item.is_checked
+  item.checked_at = item.is_checked ? now() : null
+  item.updated_at = now()
+  item.version++
+  saveAll('items', items)
+  renderTripDetail()
+}
+
+function renderTripDetail() {
+  const all = getAll('items').filter(i => i.trip_id === currentTripId && !i.deleted_at)
+  const unassigned    = all.filter(i => i.owner_type === 'unassigned' && !i.is_checked)
+  const openEssential = all.filter(i => i.is_essential && !i.is_checked && i.owner_type !== 'unassigned')
+  const openOther     = all.filter(i => !i.is_essential && !i.is_checked && i.owner_type !== 'unassigned')
+  const checked       = all.filter(i => i.is_checked)
+
+  const el = document.getElementById('trip-detail-sections')
+  el.innerHTML = [
+    renderSection('Nog toewijzen', unassigned),
+    renderSection('⭐ Essentials open', openEssential),
+    renderSection('Open', openOther),
+    renderSection(`Ingepakt (${checked.length})`, checked),
+  ].join('')
+
+  if (!all.length) {
+    el.innerHTML = `<div class="px"><div class="card empty"><div class="icon">🎒</div><p>Nog geen items. Tik op + om te beginnen.</p></div></div>`
+  }
+}
+
+function renderSection(title, items) {
+  if (!items.length) return ''
+  return `<div>
+    <div class="section-label">${title}</div>
+    <div class="px col">
+      ${items.map(item => `
+        <div class="item-row" onclick="toggleCheck('${item.id}')">
+          <span class="item-check">${item.is_checked ? '✅' : '⭕'}</span>
+          <div class="item-body">
+            <div class="item-title ${item.is_checked ? 'done' : ''}">${esc(item.title)}</div>
+            ${item.note ? `<div class="item-note">${esc(item.note)}</div>` : ''}
+          </div>
+          ${item.is_essential && !item.is_checked ? '<span style="color:#facc15;font-size:14px">⭐</span>' : ''}
+        </div>`).join('')}
+    </div>
+  </div>`
+}
+
+// ============================================================
+// IDEAS
+// ============================================================
+function toggleAddIdea() {
+  const f = document.getElementById('add-idea-form')
+  f.style.display = f.style.display === 'none' ? 'block' : 'none'
+  if (f.style.display === 'block') document.getElementById('idea-title').focus()
+}
+
+function saveIdea() {
+  const title = document.getElementById('idea-title').value.trim()
+  if (!title) return
+  const url  = document.getElementById('idea-url').value.trim()
+  const note = document.getElementById('idea-note').value.trim()
+  const ideas = getAll('ideas')
+  ideas.push(record({ title, url: url || null, note: note || null, labels: [], linked_trip_id: null }))
+  saveAll('ideas', ideas)
+  document.getElementById('idea-title').value = ''
+  document.getElementById('idea-url').value = ''
+  document.getElementById('idea-note').value = ''
+  document.getElementById('add-idea-form').style.display = 'none'
+  renderIdeas()
+}
+
+function renderIdeas() {
+  const ideas = getAll('ideas').filter(i => i.family_id === familyId() && !i.deleted_at)
+    .sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
+  const el = document.getElementById('ideas-list')
+  if (!ideas.length) {
+    el.innerHTML = `<div class="card empty"><div class="icon">💡</div><p>Nog geen ideeën. Tik op + om te beginnen.</p></div>`
+    return
+  }
+  el.innerHTML = ideas.map(i => `
+    <div class="card col" style="gap:6px">
+      <div style="font-weight:600">${esc(i.title)}</div>
+      ${i.note ? `<div style="font-size:13px;color:var(--g500)">${esc(i.note)}</div>` : ''}
+      ${i.url  ? `<a href="${esc(i.url)}" target="_blank" style="font-size:13px;color:var(--g400);word-break:break-all">${esc(i.url)}</a>` : ''}
+    </div>`).join('')
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function renderSettings() {
+  const fid     = familyId()
+  const family  = getAll('families').find(f => f.id === fid)
+  const members = getAll('members').filter(m => m.family_id === fid && !m.deleted_at && m.is_active)
+  const el = document.getElementById('settings-family')
+  if (!family) return
+  el.innerHTML = `
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin-bottom:8px">Gezin</div>
+    ${family.name ? `<div class="settings-row"><span class="settings-label">Naam</span><span class="settings-value">${esc(family.name)}</span></div>` : ''}
+    <div class="settings-row"><span class="settings-label">Gezinscode</span><span class="settings-value mono">${esc(family.join_code)}</span></div>
+    <div class="settings-row"><span class="settings-label">Leden</span><span class="settings-value">${members.map(m => esc(m.display_name)).join(', ')}</span></div>
+  `
+}
+
+function resetApp() {
+  if (!confirm('Weet je zeker dat je het gezin wilt verlaten? Alle lokale data wordt gewist.')) return
+  localStorage.clear()
+  location.reload()
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+// ============================================================
+// START
+// ============================================================
+init()
+</script>
+</body>
+</html>
